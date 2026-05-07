@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Requester Profile - DBD{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge-pending   { background-color: #ffc107; color: #212529; }
+    .status-badge-approved  { background-color: #17a2b8; color: #fff; }
+    .status-badge-completed { background-color: #28a745; color: #fff; }
+    .status-badge-rejected  { background-color: #dc3545; color: #fff; }
+    .profile-card { border-top: 4px solid var(--secondary-color); }
+    .stat-pill { display: inline-flex; flex-direction: column; align-items: center; padding: 10px 18px; border-radius: 8px; background: #f8f9fa; min-width: 80px; }
+    .table thead th { background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); color: #fff; border: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex align-items-center gap-3">
+    <a href="{% url 'transactions:history' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> Back to History
+    </a>
+    <div>
+        <h1 class="display-6 mb-0"><i class="fas fa-user-circle"></i> Requester Profile</h1>
+    </div>
+</div>
+
+<!-- Profile Card -->
+<div class="card profile-card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h3 class="mb-1">{{ requester.get_full_name|default:requester.username }}</h3>
+                <p class="text-muted mb-1"><i class="fas fa-user me-1"></i> @{{ requester.username }}</p>
+                {% if requester.email %}
+                <p class="text-muted mb-1"><i class="fas fa-envelope me-1"></i> {{ requester.email }}</p>
+                {% endif %}
+                <p class="text-muted mb-0">
+                    <i class="fas fa-calendar me-1"></i> Registered {{ requester.date_created|date:"M d, Y" }}
+                </p>
+            </div>
+            <div class="col-md-6 mt-3 mt-md-0">
+                <div class="d-flex flex-wrap gap-3 justify-content-md-end">
+                    <div class="stat-pill">
+                        <span class="fw-bold fs-4">{{ total }}</span>
+                        <span class="small text-muted">Total</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="fw-bold fs-4 text-warning">{{ pending }}</span>
+                        <span class="small text-muted">Pending</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="fw-bold fs-4 text-success">{{ completed }}</span>
+                        <span class="small text-muted">Completed</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="fw-bold fs-4 text-danger">{{ rejected }}</span>
+                        <span class="small text-muted">Rejected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Request History Table -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-file-alt me-1"></i> Certificate Request History
+    </div>
+    <div class="card-body p-0">
+        {% if cert_requests %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Certificate Type</th>
+                        <th>Recipient</th>
+                        <th>Status</th>
+                        <th>Date Submitted</th>
+                        <th>Reviewed By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in cert_requests %}
+                    <tr>
+                        <td class="text-muted small">{{ req.id }}</td>
+                        <td>{{ req.template.template_name }}</td>
+                        <td>{{ req.recipient_name }}</td>
+                        <td>
+                            <span class="badge status-badge-{{ req.status }}">
+                                {{ req.get_status_display }}
+                            </span>
+                            {% if req.status == 'rejected' and req.rejection_reason %}
+                            <i class="fas fa-info-circle text-danger ms-1" title="{{ req.rejection_reason }}" data-bs-toggle="tooltip"></i>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ req.created_date|date:"M d, Y" }}<br>
+                            <small class="text-muted">{{ req.created_date|date:"H:i" }}</small>
+                        </td>
+                        <td>
+                            {% if req.reviewed_by %}
+                                {{ req.reviewed_by.get_full_name|default:req.reviewed_by.username }}<br>
+                                <small class="text-muted">{{ req.reviewed_date|date:"M d, Y" }}</small>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if req.status == 'completed' and req.generated_certificate %}
+                            <a href="{% url 'certificates:preview' req.generated_certificate.id %}" class="btn btn-sm btn-success">
+                                <i class="fas fa-eye"></i> View Certificate
+                            </a>
+                            {% elif req.status == 'pending' and user.can_print_certificates %}
+                            <a href="{% url 'certificates:manage_requests' %}?status=pending" class="btn btn-sm btn-warning">
+                                <i class="fas fa-tasks"></i> Process
+                            </a>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No certificate requests from this requester yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Enable Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function(el) { new bootstrap.Tooltip(el); });
+</script>
+{% endblock %}

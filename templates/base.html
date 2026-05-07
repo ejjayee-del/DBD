@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DBD - Barangay Document Digitization{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #006666;
+            --secondary-color: #009999;
+            --accent-color: #00cccc;
+            --success-color: #28a745;
+            --info-color: #17a2b8;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .sidebar {
+            background-color: var(--primary-color);
+            color: white;
+            min-height: calc(100vh - 56px);
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(0, 170, 255, 0.1);
+            border-left-color: var(--accent-color);
+        }
+        
+        .main-content {
+            padding: 20px;
+            background-color: #f5f5f5;
+            min-height: calc(100vh - 56px);
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .badge-primary {
+            background-color: var(--secondary-color);
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: #f0f7ff;
+        }
+        
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        
+        .message-container {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 1050;
+            max-width: 400px;
+        }
+        
+        .alert {
+            border-radius: 5px;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <i class="fas fa-building"></i> DBD
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user"></i> {{ user.get_full_name|default:user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{% url 'accounts:logout' %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button class="dropdown-item" type="submit"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:login' %}"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            {% if user.is_authenticated %}
+            <div class="col-md-3 col-lg-2 sidebar">
+                <nav class="nav flex-column">
+                    <a class="nav-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                    
+                    {% if user.can_print_certificates %}
+                    <a class="nav-link{% if 'certificates' in request.resolver_match.app_names %} active{% endif %}" href="{% url 'certificates:types' %}">
+                        <i class="fas fa-certificate"></i> Certificates
+                    </a>
+                    <a class="nav-link{% if 'manage_requests' in request.resolver_match.url_name %} active{% endif %}" href="{% url 'certificates:manage_requests' %}">
+                        <i class="fas fa-tasks"></i> Manage Requests
+                    </a>
+                    {% endif %}
+                    
+                    {% if user.role == 'requester' %}
+                    <hr style="background-color: rgba(255,255,255,0.2);">
+                    <a class="nav-link{% if 'request_types' in request.resolver_match.url_name or 'request_certificate' in request.resolver_match.url_name %} active{% endif %}" href="{% url 'certificates:request_types' %}">
+                        <i class="fas fa-plus-circle"></i> New Request
+                    </a>
+                    <a class="nav-link{% if 'my_requests' in request.resolver_match.url_name %} active{% endif %}" href="{% url 'certificates:my_requests' %}">
+                        <i class="fas fa-list-alt"></i> My Requests
+                    </a>
+                    <a class="nav-link{% if 'requester_activity_log' in request.resolver_match.url_name %} active{% endif %}" href="{% url 'transactions:requester_activity_log' %}">
+                        <i class="fas fa-history"></i> Activity Log
+                    </a>
+                    {% else %}
+                    {% if user.can_view_history %}
+                    <a class="nav-link{% if 'history' in request.resolver_match.url_name %} active{% endif %}" href="{% url 'transactions:history' %}">
+                        <i class="fas fa-history"></i> Visit History
+                    </a>
+                    {% endif %}
+                    <a class="nav-link{% if 'activity_log' == request.resolver_match.url_name %} active{% endif %}" href="{% url 'transactions:activity_log' %}">
+                        <i class="fas fa-clipboard-list"></i> Activity Log
+                    </a>
+                    {% endif %}
+                    
+                    {% if user.is_superuser %}
+                    <hr style="background-color: rgba(255,255,255,0.2);">
+                    <a class="nav-link" href="{% url 'admin:index' %}">
+                        <i class="fas fa-lock"></i> Admin Panel
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                {% else %}
+            <div class="col-12 main-content">
+                {% endif %}
+                
+                <!-- Messages -->
+                {% if messages %}
+                <div class="message-container">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Page Content -->
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 DBD - Digitization of Barangay Documents. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
