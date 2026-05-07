@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ form.media }}
+<style>
+    .edit-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .action-buttons {
+        margin: 20px 0;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+    .note-editor {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .certificate-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Edit Certificate</h1>
+        <div>
+            <a href="{% url 'certificates:preview' certificate.id %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </div>
+    
+    <div class="certificate-info" style="font-family: 'Times New Roman', Times, serif;">
+        <p><strong>Template:</strong> {{ certificate.template.template_name }}</p>
+        <p><strong>Recipient:</strong> {{ certificate.recipient_name }}</p>
+        <p><strong>Certificate ID:</strong> {{ certificate.id }}</p>
+        <p><strong>Status:</strong> {{ certificate.status }}</p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            {{ form.certificate_data.label_tag }}
+            {{ form.certificate_data }}
+            {% if form.certificate_data.errors %}
+                <div class="alert alert-danger">{{ form.certificate_data.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+            <a href="{% url 'certificates:download' certificate.id %}" class="btn btn-success">
+                <i class="fas fa-download"></i> Download as Word
+            </a>
+            <a href="{% url 'certificates:print_from_system' certificate.id %}" class="btn btn-secondary" target="_blank">
+                <i class="fas fa-print"></i> Print
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Print Certificate{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background: #f0f0f0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Paper size selection styles - LARGER */
+        .paper-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1001;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .paper-selector label {
+            margin-right: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .paper-selector select {
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+
+        .no-print {
+            display: block;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+            .print-container {
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+            }
+        }
+
+        .print-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            width: 210mm; /* A4 width */
+            min-height: 297mm; /* A4 height */
+            margin: 0 auto;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Background watermark logo */
+        .background-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: auto;
+            opacity: 0.05;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Header row with logos */
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .left-logo, .right-logo {
+            width: 110px;
+            height: auto;
+        }
+
+        .header-text {
+            flex: 1;
+            text-align: center;
+        }
+
+        /* Header text styles */
+        .republic {
+            font-size: 14px;
+            font-weight: normal;
+            text-transform: uppercase;
+        }
+
+        .province {
+            font-size: 13px;
+            margin-top: 3px;
+        }
+
+        .municipality {
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .barangay {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .separator {
+            text-align: center;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .office-title {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .certificate-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-transform: uppercase;
+        }
+
+        /* Content styles */
+        @page {
+            size: auto;
+            margin: 15mm;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            text-align: justify;
+            line-height: 1.5;
+        }
+
+        .print-button-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .print-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-left: 20px;
+            color: #6c757d;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-btn:hover {
+            color: #495057;
+        }
+
+        /* Certificate content styles */
+        .certify-line {
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .field-row {
+            margin-bottom: 8px;
+        }
+
+        .field-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .field-value {
+            display: inline-block;
+        }
+
+        .tab2 {
+            display: inline-block;
+            width: 40px;
+        }
+
+        /* Signature section */
+        .signature-section {
+            margin-top: 50px;
+            text-align: right;
+        }
+
+        .signature-section img {
+            display: block;
+            margin-left: auto;
+            max-width: 200px;
+            max-height: 100px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 200px;
+            margin: 0 0 5px auto;
+        }
+
+        .signature-title {
+            font-weight: bold;
+            display: block;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print paper-selector">
+        <label for="paper-size">Paper Size:</label>
+        <select id="paper-size" onchange="changePaperSize(this.value)">
+            <option value="a4">📄 A4 (210mm x 297mm)</option>
+            <option value="legal">📏 Legal (8.5" x 14")</option>
+            <option value="letter">📏 Letter (8.5" x 11")</option>
+        </select>
+    </div>
+
+    <div class="no-print print-button-container">
+        <button class="print-btn" onclick="window.print();">
+            🖨️ Print Certificate
+        </button>
+        {% block back_link %}{% endblock %}
+    </div>
+
+    <div class="print-container">
+        <!-- Background watermark logo -->
+        <img src="/media/logos/logobrgy3.png" class="background-logo" alt="Background Logo">
+
+        <!-- Header with left and right logos -->
+        <div class="header-row">
+            <img src="/media/logos/logobrgy.png" class="left-logo" alt="Barangay Logo Left">
+            <div class="header-text">
+                <div class="republic">Republic of the Philippines</div>
+                <div class="province">Province of Negros Oriental</div>
+                <div class="municipality">Municipality of Basay</div>
+                <div class="barangay">BARANGAY MAGLINAO</div>
+                <div class="separator">-o0o-</div>
+                <div class="office-title">OFFICE OF THE PUNONG BARANGAY</div>
+            </div>
+            <img src="/media/logos/logobrgy2.png" class="right-logo" alt="Barangay Logo Right">
+        </div>
+
+        <div class="certificate-title">
+            {% block certificate_title %}{% endblock %}
+        </div>
+
+        <!-- Certificate content -->
+        <div class="content">
+            {% block certificate_content %}{% endblock %}
+        </div>
+
+        <!-- Signature section -->
+        <div class="signature-section">
+            {% block signature %}{% endblock %}
+        </div>
+    </div>
+
+    <script>
+        function changePaperSize(size) {
+            const container = document.querySelector('.print-container');
+            container.className = 'print-container'; // Reset classes
+            container.classList.add(size);
+        }
+
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                window.print();
+            }, 300);
+        });
+    </script>
+</body>
+</html>

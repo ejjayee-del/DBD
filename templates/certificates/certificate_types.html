@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Available Certificates - DBD{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cert-icon {
+        font-size: 2.5rem;
+        color: var(--secondary-color);
+    }
+    .cert-icon.kp-form {
+        color: #dc3545;
+    }
+    .category-section {
+        margin-bottom: 3rem;
+    }
+    .category-header {
+        background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 1.5rem;
+    }
+    .category-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+    <div>
+        <h1 class="display-6"><i class="fas fa-certificate"></i> Available Certificates</h1>
+        <p class="text-muted">Click on a certificate type to generate a new document</p>
+    </div>
+    <form method="get" class="d-flex gap-2 align-items-center" style="min-width: 260px;">
+        <input type="search" name="q" value="{{ query }}" class="form-control" placeholder="Search certificates..." aria-label="Search certificates">
+        <button type="submit" class="btn btn-outline-primary">Search</button>
+    </form>
+</div>
+
+{% if categorized_certificates %}
+    {% for category_name, category_certs in categorized_certificates.items %}
+    <div class="category-section">
+        <div class="category-header">
+            <h3><i class="fas fa-folder"></i> {{ category_name }}</h3>
+        </div>
+        <div class="row">
+            {% for cert in category_certs %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-file-pdf cert-icon"></i>
+                        </div>
+                        <h5 class="card-title">{{ cert.template_name }}</h5>
+                        <p class="card-text text-muted" style="font-size: 0.9rem;">{{ cert.description|truncatewords:15 }}</p>
+                        <p class="text-xs">
+                            <span class="badge bg-info">{{ cert.get_template_type_display }}</span>
+                        </p>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <a href="{% url 'certificates:generate' cert.id %}" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-plus"></i> Generate
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="alert alert-info" role="alert">
+    <i class="fas fa-info-circle"></i>
+    {% if query %}
+        No templates matched "{{ query }}". Try another keyword.
+    {% else %}
+        No certificate templates available. Please contact your administrator.
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

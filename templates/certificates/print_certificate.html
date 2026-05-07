@@ -1,0 +1,24 @@
+{% extends "certificates/base_print.html" %}
+
+{% block title %}Print {{ certificate.template.template_name }}{% endblock %}
+
+{% block back_link %}
+<a href="{% url 'certificates:preview' certificate.id %}" class="no-print back-btn">
+    ← Back to Preview
+</a>
+{% endblock %}
+
+{% block certificate_title %}{{ certificate.template.template_name }}{% endblock %}
+
+{% block certificate_content %}{{ rendered_content|safe }}{% endblock %}
+
+{% block signature %}
+{% if certificate.signature_official %}
+<div class="signature-line"></div>
+<div class="signature-title">{{ certificate.signature_official.name }}</div>
+<div class="signature-title">{{ certificate.signature_official.position }}</div>
+{% if certificate.signature_official.signature_image %}
+<img src="{{ certificate.signature_official.signature_image.url }}" style="max-width: 200px; max-height: 100px;" alt="Signature">
+{% endif %}
+{% endif %}
+{% endblock %}
